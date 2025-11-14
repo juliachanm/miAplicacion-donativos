@@ -1,2 +1,2 @@
 <?php
-include "backend/conectar.php";
+phpinfo();
