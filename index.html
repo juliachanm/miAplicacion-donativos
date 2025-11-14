@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Voluntarios y Donaciones</title>
+    <link rel="stylesheet" href="css/estilo.css">
+    <script defer src="js/app.js"></script>
+    <style>
+        /* Agregar la animación para fade-in */
+        .fade-in {
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bienvenido al Sistema de Gestión</h1>
+        <nav>
+            <nav id="menuNavegacion">
+    <a href="index.html">Inicio</a>
+    <!-- Aquí se insertará "Iniciar sesión" o "Cerrar sesión" dinámicamente -->
+
+        </nav>
+    </header>
+
+    <main>
+        <section id="registro">
+            <h2>Registrar Voluntario</h2>
+            <form id="formRegistro">
+                <input type="text" id="nombre" placeholder="Nombre completo" required>
+                <input type="email" id="correo" placeholder="Correo electrónico" required>
+                <button type="submit">Registrar</button>
+            </form>
+        </section>
+
+        <section id="voluntarios">
+            <h2>Lista de Voluntarios</h2>
+            <button id="btnCargarVoluntarios">Ver Voluntarios</button>
+            <div id="tablaVoluntarios"></div>
+        </section>
+
+        <section id="donar">
+            <h2>Registrar Donación</h2>
+            <form id="formDonacion">
+                <select id="voluntarioSelect" required></select>
+                <input type="number" id="monto" placeholder="Monto donado" required>
+                <input type="datetime-local" id="fechaDonacion" required> 
+                <button type="submit">Donar</button>
+            </form>
+        </section>
+
+        <section id="donaciones">
+            <h2>Seguimiento de Donaciones</h2>
+            <button id="btnVerDonaciones">Ver Donaciones</button>
+            <input type="text" id="filtro" placeholder="Buscar por nombre">
+            <div id="tablaDonaciones" class="fade-in"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Gestión de Voluntarios y Donaciones</p>
+    </footer>
+
+    <script>
+        // Asegurarse de que el script se ejecute después de que el DOM esté completamente cargado
+        document.addEventListener('DOMContentLoaded', () => {
+            const formRegistro = document.getElementById('formRegistro');
+            const btnVerDonaciones = document.getElementById('btnVerDonaciones');
+            const tablaDonaciones = document.getElementById('tablaDonaciones');
+            const filtro = document.getElementById('filtro');
+            const btnCargarVoluntarios = document.getElementById('btnCargarVoluntarios');
+            const tablaVoluntarios = document.getElementById('tablaVoluntarios');
+
+            // Función para registrar un voluntario
+            formRegistro.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const nombre = document.getElementById('nombre').value;
+                const correo = document.getElementById('correo').value;
+
+                if (!nombre || !correo) {
+                    alert('Por favor, complete todos los campos.');
+                    return;
+                }
+
+                const response = await fetch('backend/registrarVoluntario.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, correo })
+                });
+
+                const data = await response.json();
+                alert(data.message);
+
+                if (data.success) {
+                    formRegistro.reset();
+                }
+            });
+
+            // Mostrar las donaciones
+            btnVerDonaciones.addEventListener('click', async () => {
+                const response = await fetch('backend/listarDonaciones.php');
+                const data = await response.json();
+
+                if (data.success) {
+                    const donaciones = data.donaciones;
+                    let html = '<table class="fade-in"><tr><th>ID</th><th>Nombre</th><th>Correo</th><th>Monto</th><th>Fecha</th><th>Acciones</th></tr>';
+
+                    donaciones.forEach(donacion => {
+                        const fecha = new Date(donacion.fecha);
+                        const fechaFormateada = `${fecha.getDate()}/${fecha.getMonth() + 1}/${fecha.getFullYear()} ${fecha.getHours()}:${fecha.getMinutes()}`;
+
+                        html += `<tr>
+                                    <td>${donacion.id}</td>
+                                    <td>${donacion.nombre}</td>
+                                    <td>${donacion.correo}</td>
+                                    <td>${donacion.monto}</td>
+                                    <td>${fechaFormateada}</td>
+                                    <td>
+                                        <button onclick="editarDonacion(${donacion.id}, ${donacion.monto})">Editar</button>
+                                        <button onclick="eliminarDonacion(${donacion.id})">Eliminar</button>
+                                    </td>
+                                </tr>`;
+                    });
+
+                    html += '</table>';
+                    tablaDonaciones.innerHTML = html;
+                } else {
+                    alert('No se pudieron cargar las donaciones.');
+                }
+            });
+
+            // Filtro para tabla de donaciones
+            filtro.addEventListener('input', function () {
+                const textoFiltro = this.value.toLowerCase();
+                const filas = document.querySelectorAll('#tablaDonaciones table tr');
+
+                filas.forEach((fila, index) => {
+                    if (index === 0) return; // Salta el encabezado
+                    const texto = fila.textContent.toLowerCase();
+                    fila.style.display = texto.includes(textoFiltro) ? '' : 'none';
+                });
+            });
+
+            // Función para editar una donación
+            window.editarDonacion = async function (donacion_id, montoActual) {
+                const nuevoMonto = prompt("Introduce el nuevo monto", montoActual);
+
+                if (nuevoMonto && !isNaN(nuevoMonto)) {
+                    const res = await fetch('backend/editarDonacion.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ donacion_id, monto: nuevoMonto })
+                    });
+
+                    const data = await res.json();
+                    alert(data.message);
+                    if (data.success) {
+                        location.reload();
+                    }
+                } else {
+                    alert('Por favor ingresa un monto válido');
+                }
+            };
+
+            // Función para eliminar una donación
+            window.eliminarDonacion = async function (donacion_id) {
+                const confirmacion = confirm("¿Estás seguro de eliminar esta donación?");
+                if (confirmacion) {
+                    const res = await fetch('backend/eliminarDonacion.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ donacion_id })
+                    });
+
+                    const data = await res.json();
+                    alert(data.message);
+                    if (data.success) {
+                        location.reload();
+                    }
+                }
+            };
+
+            // Mostrar los voluntarios
+            btnCargarVoluntarios.addEventListener('click', async () => {
+                const res = await fetch('backend/listarVoluntarios.php');
+                const data = await res.json();
+
+                if (data.success) {
+                    let html = '<table class="fade-in"><tr><th>ID</th><th>Nombre</th><th>Correo</th><th>Acciones</th></tr>';
+                    data.voluntarios.forEach(v => {
+                        html += `<tr>
+                                    <td>${v.id}</td>
+                                    <td>${v.nombre}</td>
+                                    <td>${v.correo}</td>
+                                    <td>
+                                        <button onclick="editarVoluntario(${v.id}, '${v.nombre}', '${v.correo}')">Editar</button>
+                                        <button onclick="eliminarVoluntario(${v.id})">Eliminar</button>
+                                    </td>
+                                </tr>`;
+                    });
+                    html += '</table>';
+                    tablaVoluntarios.innerHTML = html;
+                } else {
+                    alert('Error al cargar los voluntarios');
+                }
+            });
+
+            // Función para editar un voluntario
+            window.editarVoluntario = async function (voluntario_id, nombreActual, correoActual) {
+                const nuevoNombre = prompt("Introduce el nuevo nombre", nombreActual);
+                const nuevoCorreo = prompt("Introduce el nuevo correo", correoActual);
+
+                if (nuevoNombre && nuevoCorreo) {
+                    const res = await fetch('backend/editarVoluntario.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ voluntario_id, nombre: nuevoNombre, correo: nuevoCorreo })
+                    });
+
+                    const data = await res.json();
+                    alert(data.message);
+                    if (data.success) {
+                        location.reload();
+                    }
+                } else {
+                    alert('Por favor ingresa todos los datos');
+                }
+            };
+
+            // Función para eliminar un voluntario
+            window.eliminarVoluntario = async function (voluntario_id) {
+                const confirmacion = confirm("¿Estás seguro de eliminar este voluntario?");
+                if (confirmacion) {
+                    const res = await fetch('backend/eliminarVoluntario.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ voluntario_id })
+                    });
+
+                    const data = await res.json();
+                    alert(data.message);
+                    if (data.success) {
+                        location.reload();
+                    }
+                }
+            };
+        });
+    </script>
+</body>
+</html>

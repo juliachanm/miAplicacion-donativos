@@ -1,0 +1,11 @@
+# Archivos temporales
+*.log
+*.tmp
+
+# Configuraciones locales
+.env
+*.ini
+
+# Bases de datos locales
+*.sql
+*.sqlite
