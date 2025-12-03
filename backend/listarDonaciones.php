@@ -21,6 +21,6 @@ try {
         'message' => 'Error al obtener las donaciones: ' . $e->getMessage()
     ]);
 }
-?>
+
 
 
