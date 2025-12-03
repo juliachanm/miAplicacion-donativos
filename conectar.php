@@ -19,9 +19,8 @@ try {
 
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    echo "✅ Conectado correctamente a Railway";
+    
 } catch (PDOException $e) {
-    die("❌ Error de conexión: " . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => 'Error de conexión: ' . $e->getMessage()]);
+    exit;
 }
-
-

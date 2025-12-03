@@ -18,4 +18,3 @@ try {
         'error_details' => $e->getMessage()  // Detalles del error (solo para desarrollo)
     ]);
 }
-
