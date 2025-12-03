@@ -1,6 +1,6 @@
 <?php
-// Conectar a la base de datos
-include 'backend/conectar.php';
+// Conectar a la base de datos desde la raíz
+require __DIR__ . '/conectar.php';
 ?>
 <!DOCTYPE html>
 <html lang="es">
