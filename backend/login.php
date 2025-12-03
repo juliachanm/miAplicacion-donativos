@@ -18,4 +18,3 @@ if ($stmt->rowCount() > 0) {
 } else {
     echo json_encode(['success' => false, 'message' => 'Correo o contraseña incorrectos']);
 }
-?>

@@ -7,4 +7,3 @@ if (isset($_SESSION['usuario'])) {
 } else {
     echo json_encode(['loggedIn' => false]);
 }
-?>
